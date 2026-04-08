@@ -1,48 +1,18 @@
 'use client'
-
 import { useState } from 'react'
-
 export default function SearchBar({ onSearch, loading }) {
   const [name, setName] = useState('')
-
-  function handleSubmit(e) {
-    e.preventDefault()
-    if (name.trim().length < 2) return
-    onSearch(name.trim())
-  }
-
-  const SAMPLES = ['노시환', '류현진', '김도영', '구창모', '양의지']
-
+  function handleSubmit(e) { e.preventDefault(); if(name.trim().length<2)return; onSearch(name.trim()) }
+  const SAMPLES = ['노시환','류현진','김도영','구창모','양의지']
   return (
     <div>
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <input
-          type="text"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          placeholder="선수 이름 입력 (예: 류현진)"
-          className="flex-1 bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-zinc-500"
-          disabled={loading}
-        />
-        <button
-          type="submit"
-          disabled={loading || name.trim().length < 2}
-          className="bg-white text-black font-bold text-sm px-5 py-3 rounded-xl disabled:opacity-30 hover:bg-zinc-200 transition-colors"
-        >
-          평가
-        </button>
+      <form onSubmit={handleSubmit} style={{display:'flex',gap:8}}>
+        <input type="text" value={name} onChange={e=>setName(e.target.value)} placeholder="선수 이름 입력 (예: 류현진)" disabled={loading} style={{flex:1,background:'#18181b',border:'1px solid #3f3f46',borderRadius:12,padding:'12px 16px',color:'#fff',fontSize:14,outline:'none'}} />
+        <button type="submit" disabled={loading||name.trim().length<2} style={{background:'#fff',color:'#000',border:'none',borderRadius:12,padding:'12px 20px',fontSize:14,fontWeight:700,cursor:loading||name.trim().length<2?'not-allowed':'pointer',opacity:loading||name.trim().length<2?0.4:1}}>평가</button>
       </form>
-
-      <div className="flex gap-2 mt-3 flex-wrap">
-        {SAMPLES.map(n => (
-          <button
-            key={n}
-            onClick={() => { setName(n); onSearch(n); }}
-            disabled={loading}
-            className="text-xs text-zinc-500 border border-zinc-800 rounded-full px-3 py-1 hover:border-zinc-600 hover:text-zinc-300 transition-colors disabled:opacity-30"
-          >
-            {n}
-          </button>
+      <div style={{display:'flex',gap:8,marginTop:12,flexWrap:'wrap'}}>
+        {SAMPLES.map(n=>(
+          <button key={n} onClick={()=>{setName(n);onSearch(n)}} disabled={loading} style={{fontSize:12,color:'#71717a',background:'transparent',border:'1px solid #27272a',borderRadius:20,padding:'5px 14px',cursor:loading?'not-allowed':'pointer'}}>{n}</button>
         ))}
       </div>
     </div>
