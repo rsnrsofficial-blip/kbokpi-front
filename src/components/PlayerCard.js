@@ -1,16 +1,21 @@
 'use client'
-
 import { useRef, useState } from 'react'
 
-const GRADE_COLOR = {
-  S: { bg: '#d4f5e2', text: '#0a5c36', border: '#0a5c36' },
-  A: { bg: '#d4e8ff', text: '#1a4a8a', border: '#1a4a8a' },
-  B: { bg: '#fffad4', text: '#5a5a00', border: '#8a8a00' },
-  C: { bg: '#ffe8d4', text: '#8a3d00', border: '#8a3d00' },
-  D: { bg: '#ffd4d4', text: '#7a0000', border: '#7a0000' },
-  '-': { bg: '#f0f0f0', text: '#888', border: '#ccc' },
+const GRADE_THEME = {
+  S: { primary: '#16a34a', bg: '#f0fdf4', cardBg: '#dcfce7', accent: '#15803d', emoji: '👑' },
+  A: { primary: '#2563eb', bg: '#eff6ff', cardBg: '#dbeafe', accent: '#1d4ed8', emoji: '⭐' },
+  B: { primary: '#d97706', bg: '#fffbeb', cardBg: '#fef3c7', accent: '#b45309', emoji: '📋' },
+  C: { primary: '#ea580c', bg: '#fff7ed', cardBg: '#ffedd5', accent: '#c2410c', emoji: '⚠️' },
+  D: { primary: '#dc2626', bg: '#fef2f2', cardBg: '#fee2e2', accent: '#b91c1c', emoji: '🚨' },
+  '-': { primary: '#6b7280', bg: '#f9fafb', cardBg: '#f3f4f6', accent: '#4b5563', emoji: '—' },
 }
+
 const STAMP = { S: '재계약 권고', A: '우수 인재', B: '확인 필', C: '특타 권고', D: '방출 검토' }
+
+const STAT_ICON = {
+  ERA: '㉢', G: 'Ⓖ', W: 'Ⓦ', L: 'Ⓛ', IP: 'ⓟ', SO: 'Ⓚ', WHIP: 'Ⓗ',
+  AVG: '㉢', HR: 'Ⓗ', RBI: 'Ⓡ', OBP: 'Ⓞ', SLG: 'Ⓢ', PA: 'Ⓟ',
+}
 
 export default function PlayerCard({ data }) {
   const cardRef = useRef(null)
@@ -18,19 +23,23 @@ export default function PlayerCard({ data }) {
   const sg = data.season_grade || {}
   const tg = data.today_grade || {}
   const grade = sg.grade || '-'
-  const gc = GRADE_COLOR[grade] || GRADE_COLOR['-']
-  const tgc = GRADE_COLOR[tg.grade] || GRADE_COLOR['-']
+  const th = GRADE_THEME[grade] || GRADE_THEME['-']
+
   const todayText = data.today_stats?.played
-    ? Object.entries(data.today_stats).filter(([k])=>!['played','note','일자','상대'].includes(k)).slice(0,5).map(([k,v])=>`${k} ${v}`).join('  ')
+    ? Object.entries(data.today_stats).filter(([k])=>!['played','note','일자','상대'].includes(k)).slice(0,4).map(([k,v])=>`${k} ${v}`).join('  ')
     : data.today_stats?.note || '경기 없음'
+
+  // AI 총평 첫 문장만
+  const shortComment = data.ai_comment
+    ? data.ai_comment.split(/[.。]/)[0].trim() + '.'
+    : '총평 없음'
 
   async function saveImage() {
     if (!cardRef.current) return
     setSaving(true)
     try {
       const html2canvas = (await import('html2canvas')).default
-      const el = cardRef.current
-      const canvas = await html2canvas(el, { scale: 3, backgroundColor: '#09090b', useCORS: true, allowTaint: true })
+      const canvas = await html2canvas(cardRef.current, { scale: 3, backgroundColor: '#ffffff', useCORS: true, allowTaint: true })
       const a = document.createElement('a')
       a.download = `kbo_${data.name}.png`
       a.href = canvas.toDataURL('image/png')
@@ -40,54 +49,165 @@ export default function PlayerCard({ data }) {
   }
 
   return (
-    <div style={{marginTop:24}}>
-      <div ref={cardRef} style={{width:'100%',aspectRatio:'1/1',background:'#09090b',border:'1px solid #27272a',borderRadius:16,overflow:'hidden',display:'flex',flexDirection:'column',fontFamily:"'Noto Sans KR',sans-serif"}}>
-        <div style={{background:'#18181b',borderBottom:'1px solid #27272a',padding:'14px 18px',display:'flex',alignItems:'center',gap:14,flexShrink:0}}>
-          <div style={{width:64,height:64,borderRadius:'50%',overflow:'hidden',border:'2px solid #3f3f46',flexShrink:0,background:'#27272a'}}>
-            {data.photo_url && <img src={data.photo_url} alt={data.name} crossOrigin="anonymous" style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'top'}} onError={e=>e.target.style.display='none'} />}
+    <div style={{ marginTop: 20 }}>
+      <div ref={cardRef} style={{
+        width: '100%',
+        aspectRatio: '1/1',
+        background: '#ffffff',
+        border: `3px solid ${th.primary}`,
+        borderRadius: 20,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        fontFamily: "'Noto Sans KR', sans-serif",
+      }}>
+        {/* 등급 헤더 */}
+        <div style={{
+          background: th.cardBg,
+          borderBottom: `2px solid ${th.primary}`,
+          padding: '14px 18px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 13, fontWeight: 900, color: th.accent }}>종합 인사등급</span>
           </div>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontSize:10,color:'#71717a',letterSpacing:'0.15em',marginBottom:2}}>KBO 인사평가시스템</div>
-            <div style={{fontSize:22,fontWeight:900,color:'#fff',lineHeight:1,marginBottom:3}}>{data.name}</div>
-            <div style={{fontSize:11,color:'#71717a'}}>{data.team} · {data.position} · 연봉 {data.salary_display}</div>
-          </div>
-          <div style={{width:56,height:56,borderRadius:'50%',border:`2px solid ${gc.border}`,background:gc.bg,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-            <span style={{fontSize:28,fontWeight:900,color:gc.text,lineHeight:1}}>{grade}</span>
-            <span style={{fontSize:10,color:gc.text}}>{Math.round(sg.score||0)}점</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 12, color: th.accent, fontWeight: 700 }}>{Math.round(sg.score || 0)}점</span>
+            <div style={{
+              width: 52, height: 52,
+              borderRadius: '50%',
+              border: `3px solid ${th.primary}`,
+              background: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <span style={{ fontSize: 30, fontWeight: 900, color: th.primary, lineHeight: 1 }}>{grade}</span>
+            </div>
           </div>
         </div>
-        <div style={{flex:1,display:'flex',flexDirection:'column',padding:'14px 18px 10px',minHeight:0}}>
-          <div style={{fontSize:13,fontWeight:700,color:'#fff',marginBottom:2}}>{sg.grade_label}</div>
-          <div style={{fontSize:11,color:'#71717a',marginBottom:14}}>경기당 인건비 {data.daily_wage_display}</div>
-          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6,marginBottom:12}}>
-            {Object.entries(data.season_stats||{}).slice(0,6).map(([k,v])=>(
-              <div key={k} style={{background:'#18181b',border:'1px solid #27272a',borderRadius:8,padding:'8px 6px 6px',textAlign:'center'}}>
-                <div style={{fontSize:9,color:'#71717a',fontWeight:700,letterSpacing:'0.08em',marginBottom:3}}>{k}</div>
-                <div style={{fontSize:16,fontWeight:900,color:'#fff'}}>{v}</div>
+
+        {/* 선수 정보 */}
+        <div style={{
+          background: th.bg,
+          padding: '12px 18px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14,
+          borderBottom: `1px solid ${th.cardBg}`,
+          flexShrink: 0,
+        }}>
+          <div style={{
+            width: 62, height: 62,
+            borderRadius: '50%',
+            border: `3px solid ${th.primary}`,
+            overflow: 'hidden',
+            flexShrink: 0,
+            background: th.cardBg,
+          }}>
+            {data.photo_url && (
+              <img src={data.photo_url} alt={data.name} crossOrigin="anonymous"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
+                onError={e => e.target.style.display='none'}
+              />
+            )}
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 9, color: th.accent, fontWeight: 700, letterSpacing: '0.12em', marginBottom: 2 }}>KBO 인사평가시스템</div>
+            <div style={{ fontSize: 24, fontWeight: 900, color: '#111', lineHeight: 1.1, marginBottom: 3 }}>{data.name}</div>
+            <div style={{ fontSize: 11, color: '#666' }}>{data.team} · {data.position} · 연봉 {data.salary_display}</div>
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ fontSize: 9, color: '#999', marginBottom: 2 }}>경기당 인건비</div>
+            <div style={{ fontSize: 13, fontWeight: 900, color: th.primary }}>{data.daily_wage_display}</div>
+            <div style={{ fontSize: 9, color: '#999', marginTop: 3 }}>{sg.grade_label?.split(' ')[0]}</div>
+          </div>
+        </div>
+
+        {/* 스탯 */}
+        <div style={{
+          background: '#fff',
+          padding: '12px 18px',
+          borderBottom: `1px solid ${th.cardBg}`,
+          flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {Object.entries(data.season_stats || {}).slice(0, 6).map(([k, v]) => (
+              <div key={k} style={{
+                flex: '1 0 calc(16% - 6px)',
+                minWidth: 52,
+                background: th.cardBg,
+                border: `1.5px solid ${th.primary}`,
+                borderRadius: 10,
+                padding: '7px 4px 5px',
+                textAlign: 'center',
+              }}>
+                <div style={{ fontSize: 9, color: th.accent, fontWeight: 700, marginBottom: 2 }}>{k}</div>
+                <div style={{ fontSize: 15, fontWeight: 900, color: '#111' }}>{v}</div>
               </div>
             ))}
           </div>
-          <div style={{flex:1,background:'#1c1400',border:'1px solid #854d0e',borderRadius:10,padding:'10px 14px',minHeight:0,overflow:'hidden'}}>
-            <div style={{fontSize:9,fontWeight:700,color:'#f59e0b',letterSpacing:'0.12em',marginBottom:6}}>AI 인사팀 총평</div>
-            <p style={{fontSize:11,color:'#fef3c7',lineHeight:1.6,margin:0,overflow:'hidden',display:'-webkit-box',WebkitLineClamp:4,WebkitBoxOrient:'vertical'}}>{data.ai_comment||'총평 데이터 없음'}</p>
-          </div>
         </div>
-        <div style={{borderTop:'1px dashed #27272a',padding:'7px 18px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
-          <span style={{fontSize:9,color:'#52525b',fontWeight:700,letterSpacing:'0.12em'}}>TODAY</span>
-          <div style={{display:'flex',alignItems:'center',gap:8}}>
-            <span style={{fontSize:11,color:'#d4d4d8',fontWeight:700}}>{todayText}</span>
-            <span style={{fontSize:11,fontWeight:900,padding:'2px 8px',borderRadius:4,background:tgc.bg,color:tgc.text}}>{tg.grade||'-'}</span>
-          </div>
+
+        {/* AI 총평 */}
+        <div style={{
+          flex: 1,
+          background: th.bg,
+          padding: '12px 18px',
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+        }}>
+          <div style={{ fontSize: 9, fontWeight: 900, color: th.accent, letterSpacing: '0.12em', marginBottom: 6 }}>AI 인사팀 총평</div>
+          <p style={{
+            fontSize: 12,
+            color: '#333',
+            lineHeight: 1.65,
+            margin: 0,
+            fontWeight: 500,
+          }}>{data.ai_comment || '총평 데이터 없음'}</p>
         </div>
-        <div style={{background:'#18181b',borderTop:'1px solid #27272a',padding:'7px 18px',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
-          <span style={{fontSize:9,color:'#52525b',letterSpacing:'0.08em'}}>kbokpi-front.vercel.app</span>
-          <span style={{fontSize:10,fontWeight:900,padding:'3px 10px',borderRadius:4,background:gc.bg,color:gc.text}}>{STAMP[grade]||'확인필'}</span>
+
+        {/* 오늘 성적 + 푸터 */}
+        <div style={{
+          background: '#111',
+          padding: '8px 18px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexShrink: 0,
+        }}>
+          <div>
+            <div style={{ fontSize: 8, color: '#888', letterSpacing: '0.1em', marginBottom: 2 }}>TODAY</div>
+            <div style={{ fontSize: 11, color: '#ddd', fontWeight: 700 }}>{todayText}</div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 9, color: '#555' }}>kbokpi-front.vercel.app</span>
+            <span style={{
+              fontSize: 10, fontWeight: 900,
+              padding: '3px 10px',
+              borderRadius: 6,
+              background: th.cardBg,
+              color: th.accent,
+            }}>{STAMP[grade] || '확인필'}</span>
+          </div>
         </div>
       </div>
-      <button onClick={saveImage} disabled={saving} style={{width:'100%',marginTop:10,padding:'12px',background:'#18181b',border:'1px solid #27272a',borderRadius:12,color:'#fff',fontSize:13,fontWeight:700,cursor:saving?'not-allowed':'pointer',opacity:saving?0.5:1}}>
+
+      <button onClick={saveImage} disabled={saving} style={{
+        width: '100%', marginTop: 10, padding: '13px',
+        background: '#111', border: 'none', borderRadius: 12,
+        color: '#fff', fontSize: 14, fontWeight: 700,
+        cursor: saving ? 'not-allowed' : 'pointer',
+        opacity: saving ? 0.5 : 1,
+      }}>
         {saving ? '저장 중...' : '이미지 저장 (공유용)'}
       </button>
-      {data.cached && <p style={{textAlign:'center',fontSize:11,color:'#52525b',marginTop:8}}>캐시된 데이터 · {data.crawled_at}</p>}
+      {data.cached && <p style={{ textAlign:'center', fontSize:11, color:'#999', marginTop:8 }}>캐시된 데이터 · {data.crawled_at}</p>}
     </div>
   )
 }
