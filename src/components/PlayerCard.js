@@ -105,8 +105,8 @@ export default function PlayerCard({ data }) {
             background: '#fff',
             boxShadow: '3px 3px 0 #111',
           }}>
-            {data.player_id ? `https://kbo-hr-api.onrender.com/photo/${data.player_id}` : data.photo_url && (
-              <img src={data.player_id ? `https://kbo-hr-api.onrender.com/photo/${data.player_id}` : data.photo_url} alt={data.name} crossOrigin="anonymous"
+            {data.photo_url && (
+              <img src={`https://kbo-hr-api.onrender.com/photo/${data.player_id || data.photo_url.split("/").pop().replace(".jpg","")}`} alt={data.name} crossOrigin="anonymous"
                 style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }}
                 onError={e => e.target.style.display='none'}
               />
