@@ -16,11 +16,11 @@ export default function Home() {
     finally{setLoading(false)}
   }
   return (
-    <main style={{minHeight:'100vh',background:'#09090b',display:'flex',flexDirection:'column',alignItems:'center',padding:'48px 16px'}}>
-      <div style={{width:'100%',maxWidth:480}}>
-        <div style={{textAlign:'center',marginBottom:40}}>
-          <h1 style={{fontSize:32,fontWeight:900,color:'#fff',letterSpacing:'-0.02em',marginBottom:8}}>KBO 인사평가</h1>
-          <p style={{fontSize:14,color:'#71717a'}}>연봉 대비 성과를 AI가 냉정하게 평가합니다</p>
+    <main style={{minHeight:'100vh',background:'#09090b',display:'flex',flexDirection:'column',alignItems:'center',padding:'40px 20px'}}>
+      <div style={{width:'100%',maxWidth:600}}>
+        <div style={{textAlign:'center',marginBottom:32}}>
+          <h1 style={{fontSize:'clamp(24px,5vw,36px)',fontWeight:900,color:'#fff',letterSpacing:'-0.02em',marginBottom:8}}>KBO 인사평가</h1>
+          <p style={{fontSize:'clamp(12px,3vw,14px)',color:'#71717a'}}>연봉 대비 성과를 AI가 냉정하게 평가합니다</p>
         </div>
         <SearchBar onSearch={search} loading={loading} />
         {error && <div style={{marginTop:16,textAlign:'center',color:'#f87171',fontSize:14}}>{error}</div>}
